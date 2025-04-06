@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <title>Clasificador de Iris - Modelos Comparativos</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --primary-hover: #5649c0;
+            --secondary-color: #a29bfe;
+            --text-color: #2d3436;
+            --light-gray: #dfe6e9;
+            --white: #ffffff;
+            --success-color: #00b894;
+            --error-color: #d63031;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --card-radius: 16px;
+            --input-radius: 8px;
+            --transition: all 0.3s ease;
+            
+            /* Variables para tema oscuro/claro */
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --card-text: #2d3436;
+            --border-color: #dfe6e9;
+        }
+        
+        [data-bs-theme="dark"] {
+            --bg-color: #212529;
+            --card-bg: #343a40;
+            --card-text: #f8f9fa;
+            --border-color: #495057;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            padding-top: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            padding: 1.5rem;
+        }
+        
+        .card-img-top {
+            max-height: 180px;
+            object-fit: cover;
+        }
+        
+        .model-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .footer {
+            margin-top: 3rem;
+            padding: 2rem 0;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .metric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+        
+        .prediction-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: var(--card-radius);
+            display: none;
+        }
+        
+        .model-results {
+            margin-top: 2rem;
+        }
+        
+        .vs-badge {
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 0 auto;
+            box-shadow: var(--shadow);
+        }
+        
+        .result-card {
+            border-radius: var(--card-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .prediction-badge {
+            font-size: 1.2rem;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Selector de tema -->
+    <div class="theme-toggle" id="themeToggle">
+        <i class="bi bi-sun-fill" id="themeIcon"></i>
+    </div>
+    
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold">Clasificador de Iris</h1>
+            <p class="lead text-muted">Comparación de modelos para clasificación de flores de Iris</p>
+        </div>
+        
+        <!-- Formulario de Predicción -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h2><i class="bi bi-flower1 me-2"></i>Predecir Especie</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <p class="text-muted">Ingresa las medidas de la flor para predecir su especie utilizando ambos modelos</p>
+                        </div>
+                        
+                        <form id="predictionForm" class="row g-3">
+                            <div class="col-md-6">
+                                <label for="sepal_length" class="form-label">Longitud del Sépalo (cm)</label>
+                                <input type="number" class="form-control" id="sepal_length" name="sepal_length" step="0.1" min="4.0" max="8.0" value="5.7" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="sepal_width" class="form-label">Ancho del Sépalo (cm)</label>
+                                <input type="number" class="form-control" id="sepal_width" name="sepal_width" step="0.1" min="2.0" max="4.5" value="3.1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="petal_length" class="form-label">Longitud del Pétalo (cm)</label>
+                                <input type="number" class="form-control" id="petal_length" name="petal_length" step="0.1" min="1.0" max="7.0" value="4.2" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="petal_width" class="form-label">Ancho del Pétalo (cm)</label>
+                                <input type="number" class="form-control" id="petal_width" name="petal_width" step="0.1" min="0.1" max="2.5" value="1.3" required>
+                            </div>
+                            <div class="col-12 text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-search me-2"></i>Predecir Especie
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Sección de Resultados -->
+                        <div id="predictionResults" class="prediction-section">
+                            <h3 class="text-center mb-4">Resultados de la Predicción</h3>
+                            
+                            <div class="row model-results">
+                                <!-- Resultados Regresión Logística -->
+                                <div class="col-md-5">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light">
+                                            <h4 class="mb-0">
+                                                <i class="bi bi-graph-up me-2"></i>Regresión Logística
+                                            </h4>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <div class="prediction-badge bg-primary text-white" id="logPredictionBadge">
+                                                Especie: <span id="logPrediction"></span>
+                                            </div>
+                                            <h5 class="mb-3">Probabilidades</h5>
+                                            <div class="mb-3">
+                                                <label class="form-label">Iris Setosa</label>
+                                                <div class="progress" style="height: 25px;">
+                                                    <div id="logProbSetosa" class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Iris Versicolor</label>
+                                                <div class="progress" style="height: 25px;">
+                                                    <div id="logProbVersicolor" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Iris Virginica</label>
+                                                <div class="progress" style="height: 25px;">
+                                                    <div id="logProbVirginica" class="progress-bar bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Divisor VS -->
+                                <div class="col-md-2 d-flex align-items-center justify-content-center">
+                                    <div class="vs-badge">VS</div>
+                                </div>
+                                
+                                <!-- Resultados Random Forest -->
+                                <div class="col-md-5">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light">
+                                            <h4 class="mb-0">
+                                                <i class="bi bi-tree-fill me-2"></i>Random Forest
+                                            </h4>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <div class="prediction-badge bg-primary text-white" id="rfPredictionBadge">
+                                                Especie: <span id="rfPrediction"></span>
+                                            </div>
+                                            <h5 class="mb-3">Probabilidades</h5>
+                                            <div class="mb-3">
+                                                <label class="form-label">Iris Setosa</label>
+                                                <div class="progress" style="height: 25px;">
+                                                    <div id="rfProbSetosa" class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Iris Versicolor</label>
+                                                <div class="progress" style="height: 25px;">
+                                                    <div id="rfProbVersicolor" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Iris Virginica</label>
+                                                <div class="progress" style="height: 25px;">
+                                                    <div id="rfProbVirginica" class="progress-bar bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Conclusión -->
+                            <div class="text-center mt-4">
+                                <div id="comparisonResult" class="alert alert-info">
+                                    <h5 class="alert-heading">Análisis de la Predicción</h5>
+                                    <p id="comparisonText">Ambos modelos han producido resultados similares.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botón de rendimiento -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('comparison') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-bar-chart-steps me-2"></i>Ver Rendimiento de los Modelos
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Sobre este proyecto</h5>
+                    <p class="text-muted">Demostración de dos enfoques diferentes para clasificar especies de Iris: un modelo lineal (Regresión Logística) y un modelo basado en árboles (Random Forest).</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Dataset</h5>
+                    <p class="text-muted">Utiliza el famoso conjunto de datos Iris de Fisher que incluye 150 muestras de tres especies de Iris con cuatro características medidas.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS Bundle con Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Código para manejar el cambio de tema
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const htmlElement = document.documentElement;
+            
+            // Verificar si hay un tema guardado en localStorage
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                htmlElement.setAttribute('data-bs-theme', savedTheme);
+                updateThemeIcon(savedTheme);
+            }
+            
+            // Manejar el clic en el botón de tema
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = htmlElement.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                // Actualizar el tema
+                htmlElement.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+            });
+            
+            // Función para actualizar el icono del tema
+            function updateThemeIcon(theme) {
+                themeIcon.className = theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+            }
+            
+            // Código para el formulario de predicción
+            const predictionForm = document.getElementById('predictionForm');
+            const predictionResults = document.getElementById('predictionResults');
+            
+            // Función para actualizar las barras de probabilidad
+            function updateProbabilityBar(element, value) {
+                element.style.width = value + '%';
+                element.setAttribute('aria-valuenow', value);
+                element.textContent = value.toFixed(1) + '%';
+            }
+            
+            // Manejar el envío del formulario
+            predictionForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(predictionForm);
+                
+                try {
+                    // Predecir con Regresión Logística
+                    const logResponse = await fetch('/predict/logistic', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const logData = await logResponse.json();
+                    
+                    // Predecir con Random Forest
+                    const rfResponse = await fetch('/predict/forest', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const rfData = await rfResponse.json();
+                    
+                    if (logData.success && rfData.success) {
+                        // Mostrar resultados
+                        predictionResults.style.display = 'block';
+                        
+                        // Actualizar resultados de Regresión Logística
+                        document.getElementById('logPrediction').textContent = logData.prediction;
+                        updateProbabilityBar(document.getElementById('logProbSetosa'), logData.probabilities['setosa'] || 0);
+                        updateProbabilityBar(document.getElementById('logProbVersicolor'), logData.probabilities['versicolor'] || 0);
+                        updateProbabilityBar(document.getElementById('logProbVirginica'), logData.probabilities['virginica'] || 0);
+                        
+                        // Actualizar resultados de Random Forest
+                        document.getElementById('rfPrediction').textContent = rfData.prediction;
+                        updateProbabilityBar(document.getElementById('rfProbSetosa'), rfData.probabilities['setosa'] || 0);
+                        updateProbabilityBar(document.getElementById('rfProbVersicolor'), rfData.probabilities['versicolor'] || 0);
+                        updateProbabilityBar(document.getElementById('rfProbVirginica'), rfData.probabilities['virginica'] || 0);
+                        
+                        // Comparar predicciones
+                        const comparisonText = document.getElementById('comparisonText');
+                        const comparisonResult = document.getElementById('comparisonResult');
+                        
+                        if (logData.prediction === rfData.prediction) {
+                            comparisonText.textContent = `Ambos modelos predicen la misma especie: ${logData.prediction}. Esto indica una alta confianza en la clasificación.`;
+                            comparisonResult.className = 'alert alert-success';
+                        } else {
+                            comparisonText.textContent = `Los modelos predicen especies diferentes. Regresión Logística: ${logData.prediction}, Random Forest: ${rfData.prediction}. Esto podría indicar un caso en el límite entre clases.`;
+                            comparisonResult.className = 'alert alert-warning';
+                        }
+                        
+                        // Desplazarse hasta los resultados
+                        predictionResults.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        // Mostrar error
+                        alert('Error: ' + (logData.error || rfData.error));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al procesar la solicitud');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

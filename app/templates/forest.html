@@ -1,0 +1,273 @@
+{% extends "layout.html" %}
+
+{% block title %}Random Forest - Clasificador de Iris{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Encabezado -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold">Modelo Random Forest</h1>
+            <p class="lead text-muted">Clasificación de especies de Iris utilizando ensamble de árboles de decisión</p>
+        </div>
+    </div>
+    
+    <!-- Métricas del modelo -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Rendimiento del Modelo</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Métricas Principales</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="metric-card p-3 rounded text-center">
+                                                <h5>Exactitud</h5>
+                                                <p class="display-6 text-primary mb-0">{{ "%.3f"|format(metrics.accuracy) }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="metric-card p-3 rounded text-center">
+                                                <h5>Precisión</h5>
+                                                <p class="display-6 text-primary mb-0">{{ "%.3f"|format(metrics.precision) }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="metric-card p-3 rounded text-center">
+                                                <h5>Recall</h5>
+                                                <p class="display-6 text-primary mb-0">{{ "%.3f"|format(metrics.recall) }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="metric-card p-3 rounded text-center">
+                                                <h5>F1-Score</h5>
+                                                <p class="display-6 text-primary mb-0">{{ "%.3f"|format(metrics.f1) }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Mejores Parámetros</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        {% for param, value in best_params.items() %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ param.split('__')[1] }}
+                                            <span class="badge rounded-pill bg-primary">{{ value }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Matriz de Confusión</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ metrics.confusion_matrix_img }}" class="img-fluid" alt="Matriz de Confusión">
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Curvas ROC</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ metrics.roc_curves_img }}" class="img-fluid" alt="Curvas ROC">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Visualizaciones avanzadas -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Visualizaciones</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Importancia de Características</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ metrics.feature_importance_img }}" class="img-fluid" alt="Importancia de Características">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Superficie de Decisión</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ metrics.decision_boundary_img }}" class="img-fluid" alt="Superficie de Decisión">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if metrics.oob_score is defined %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Puntuación Out-of-Bag (OOB)</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div class="metric-card p-3 rounded d-inline-block px-5">
+                                        <h5>OOB Score</h5>
+                                        <p class="display-4 text-success">{{ "%.4f"|format(metrics.oob_score) }}</p>
+                                        <small class="text-muted">Estimación de precisión con muestras fuera de bolsa</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Realizar predicciones -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Realizar Predicción</h2>
+                </div>
+                <div class="card-body">
+                    <form id="predictionForm" method="post" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="sepal_length" class="form-label">Longitud del Sépalo (cm)</label>
+                            <input type="number" class="form-control" id="sepal_length" name="sepal_length" step="0.1" min="4.0" max="8.0" value="5.7" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sepal_width" class="form-label">Ancho del Sépalo (cm)</label>
+                            <input type="number" class="form-control" id="sepal_width" name="sepal_width" step="0.1" min="2.0" max="4.5" value="3.1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="petal_length" class="form-label">Longitud del Pétalo (cm)</label>
+                            <input type="number" class="form-control" id="petal_length" name="petal_length" step="0.1" min="1.0" max="7.0" value="4.2" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="petal_width" class="form-label">Ancho del Pétalo (cm)</label>
+                            <input type="number" class="form-control" id="petal_width" name="petal_width" step="0.1" min="0.1" max="2.5" value="1.3" required>
+                        </div>
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary">Predecir Especie</button>
+                        </div>
+                    </form>
+                    
+                    <div id="predictionResult" class="mt-4" style="display: none;">
+                        <div class="alert alert-success">
+                            <h4 class="alert-heading">Resultado de la Predicción</h4>
+                            <p>La especie predicha es: <strong id="predictionSpecies"></strong></p>
+                            <hr>
+                            <h5>Probabilidades:</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <div class="progress" style="height: 25px;">
+                                        <div id="probSetosa" class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                    <small>Iris Setosa</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="progress" style="height: 25px;">
+                                        <div id="probVersicolor" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                    <small>Iris Versicolor</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="progress" style="height: 25px;">
+                                        <div id="probVirginica" class="progress-bar bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                    <small>Iris Virginica</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const predictionForm = document.getElementById('predictionForm');
+        const predictionResult = document.getElementById('predictionResult');
+        const predictionSpecies = document.getElementById('predictionSpecies');
+        const probSetosa = document.getElementById('probSetosa');
+        const probVersicolor = document.getElementById('probVersicolor');
+        const probVirginica = document.getElementById('probVirginica');
+        
+        predictionForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(predictionForm);
+            
+            fetch('/predict/forest', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar el resultado
+                    predictionResult.style.display = 'block';
+                    
+                    // Actualizar especie predicha
+                    predictionSpecies.textContent = data.prediction;
+                    
+                    // Actualizar barras de probabilidad
+                    updateProbabilityBar(probSetosa, data.probabilities['setosa'] || 0);
+                    updateProbabilityBar(probVersicolor, data.probabilities['versicolor'] || 0);
+                    updateProbabilityBar(probVirginica, data.probabilities['virginica'] || 0);
+                    
+                    // Desplazarse hasta el resultado
+                    predictionResult.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar la solicitud');
+            });
+        });
+        
+        function updateProbabilityBar(element, value) {
+            // Actualizar porcentaje en la barra
+            element.style.width = value + '%';
+            element.setAttribute('aria-valuenow', value);
+            element.textContent = value.toFixed(1) + '%';
+        }
+    });
+</script>
+{% endblock %} 
